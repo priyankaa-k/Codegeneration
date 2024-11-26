@@ -1,1 +1,34 @@
 Code generation using LLM
+
+
+filtered_df = df[(df['CUS-TIN'] != 0) & (df['CUS-TIN'].notnull())]
+
+#fill nan values in 'FIRST-NAME', 'MIDDLE-NAME', 'LAST-NAME', 'SUFFIX','ENTITYNAME' as '-'
+def fill_missing_values(df, columns):
+    for col in columns:
+        df[col] = df[col].fillna('NNN')
+    return df
+filtered_df = fill_missing_values(filtered_df, ['FIRST-NAME', 'MIDDLE-NAME', 'LAST-NAME', 'SUFFIX','ENTITYNAME'])
+
+group_cols = ['CUS-TIN', 'FIRST-NAME', 'MIDDLE-NAME', 'LAST-NAME', 'SUFFIX','ENTITYNAME']
+
+# Group the DataFrame and count occurrences
+grouped_df = filtered_df.groupby(group_cols).size().reset_index(name='count')
+
+# Filter the grouped DataFrame based on the 'count' column
+filtered_grouped_df = grouped_df[grouped_df['count'] > 1]
+
+
+# Merge the filtered grouped DataFrame back with the original DataFrame to see all columns
+result_df = filtered_df.merge(filtered_grouped_df[group_cols], on=group_cols, how='inner')
+
+# Display the result
+result_df
+
+# Filter groups where 'static_key' and 'short_name' differ
+filtered_result_df = result_df[result_df.groupby(group_cols)[['STATIC-KEY', 'SHORT-NAME']]
+                                .transform('nunique').gt(1).any(axis=1)]
+
+# Display the filtered DataFrame
+filtered_result_df
+
